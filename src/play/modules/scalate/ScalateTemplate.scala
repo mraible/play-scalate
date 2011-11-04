@@ -1,8 +1,12 @@
 package play.modules.scalate
 
 import play.Play
+import play.exceptions.{PlayException,TemplateNotFoundException}
 import play.data.validation.Validation
-import play.mvc.{Http, Scope}
+import java.io.{StringWriter,PrintWriter}
+import java.io.{File}
+import play.mvc.results.ScalateResult
+import play.mvc.{Scope, Http}
 
 object ScalateTemplate {
 
@@ -21,22 +25,46 @@ object ScalateTemplate {
     engine.classLoader = Play.classloader
     engine.layoutStrategy = new DefaultLayoutStrategy(engine,
       Play.getFile("/app/views/layouts/default" + scalateType).getAbsolutePath)
+      
+    engine.bindings = List(
+      Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true)
+    )
+          
     engine
   }
 
   case class Template(name: String) {
-
+    
     def render(args: (Symbol, Any)*) = {
       val argsMap = populateRenderArgs(args: _*)
-
-      scalateEngine.layout(name + scalateType, argsMap)
-    }
-    
-    def render(args: java.util.Map[String, AnyRef]) = {
-      import scala.collection.JavaConverters._
-      var argsAsScala = Map.empty[String,Any] ++ args.asScala.map( e => (e.toString, e) )
       
-      scalateEngine.layout(name + scalateType, argsAsScala)
+      val buffer = new StringWriter()
+      var context = new DefaultRenderContext(name, scalateEngine, new PrintWriter(buffer))
+      
+      try {
+        val templatePath = new File(Play.applicationPath+"/app/views","/"+name).toString
+          .replace(new File(Play.applicationPath+"/app/views").toString,"")
+        scalateEngine.layout(templatePath + scalateType, argsMap)
+      } catch {
+        case ex:TemplateNotFoundException => {
+          if(ex.isSourceAvailable) {
+            throw ex
+          }
+          val element = PlayException.getInterestingStrackTraceElement(ex)
+          if (element != null) {
+             throw new TemplateNotFoundException(name, 
+               Play.classes.getApplicationClass(element.getClassName()), element.getLineNumber());
+          } else {
+             throw ex
+          }
+        }  
+        case ex:InvalidSyntaxException => handleSpecialError(context,ex)
+        case ex:CompilerException => handleSpecialError(context,ex)
+        case ex:Exception => handleSpecialError(context,ex)
+      } finally {
+        if (buffer.toString.length > 0)
+          throw new ScalateResult(buffer.toString,name)
+      }
     }
   }
 
@@ -64,6 +92,24 @@ object ScalateTemplate {
     renderArgs.data.toMap
   }
 
+  private def handleSpecialError(context:DefaultRenderContext,ex:Exception) {
+    context.attributes("javax.servlet.error.exception") = ex
+    context.attributes("javax.servlet.error.message") = ex.getMessage
+    try {
+      scalateEngine.layout(scalateEngine.load(errorTemplate), context)
+    } catch {
+      case ex:Exception =>
+        // TODO use logging API from Play here...
+        println("Caught: " + ex)
+        ex.printStackTrace
+
+    }
+  }
+  
+  private def errorTemplate:String = {
+    val fullPath = new File(Play.applicationPath,"/app/views/errors/500.scaml").toString 
+    fullPath.replace(new File(Play.applicationPath+"/app/views").toString,"")
+  }
   // --- ROUTERS
   def action(action: => Any) = {
     new play.mvc.results.ScalaAction(action).actionDefinition.url
@@ -71,7 +117,8 @@ object ScalateTemplate {
 
   implicit def validationErrors:Map[String,play.data.validation.Error] = {
     import scala.collection.JavaConverters._
-    Map.empty[String,play.data.validation.Error] ++ Validation.errors.asScala.map( e => (e.getKey, e) )
+    Map.empty[String,play.data.validation.Error] ++ 
+      Validation.errors.asScala.map( e => (e.getKey, e) )
   }
 
   def asset(path:String) = play.mvc.Router.reverse(play.Play.getVirtualFile(path))

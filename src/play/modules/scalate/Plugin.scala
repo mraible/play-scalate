@@ -1,15 +1,7 @@
 package play.modules.scalate
 
-import play.Logger
 import play.PlayPlugin
-import play.exceptions.UnexpectedException
 import play.mvc.{Scope, Http}
-import play.mvc.Http.Header
-import play.mvc.Http.Request
-import play.mvc.Http.Response
-import play.mvc.Scope.RenderArgs
-import play.mvc.results.Result
-import play.templates.Template
 import play.vfs.VirtualFile
 
 class Plugin extends PlayPlugin {
@@ -35,9 +27,13 @@ class Plugin extends PlayPlugin {
     
     override def compile(): Unit = {} 
     
+    override def render(args: java.util.Map[String, AnyRef]): String = {
+      internalRender(args)
+    }
     override def internalRender(args: java.util.Map[String, AnyRef]): String = {
-
-      ScalateTemplate(template).render(args)
+      // todo: Convert from a [String, AnyRef] to (Symbol, Any)
+      // ScalateTemplate(template).render(args)
+      ""
     }
   }
 }
