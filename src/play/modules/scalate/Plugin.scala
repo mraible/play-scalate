@@ -27,13 +27,18 @@ class Plugin extends PlayPlugin {
     
     override def compile(): Unit = {} 
     
-    override def render(args: java.util.Map[String, AnyRef]): String = {
+    override def render(args: java.util.Map[String, AnyRef]) = {
       internalRender(args)
     }
-    override def internalRender(args: java.util.Map[String, AnyRef]): String = {
-      // todo: Convert from a [String, AnyRef] to (Symbol, Any)
-      // ScalateTemplate(template).render(args)
-      ""
+    override def internalRender(args: java.util.Map[String, AnyRef]) = {
+      var map:Map[Symbol, Any] = convertMap(args);
+      ScalateTemplate(template).render(map.toSeq :_*)
+    }
+    
+    def convertMap(in: java.util.Map[String, AnyRef]): Map[Symbol, Any] = {
+      import scala.collection.JavaConversions._
+      
+      Map.empty ++ (in map { pair => (Symbol(pair._1) -> pair._2.asInstanceOf[Any]) })
     }
   }
 }

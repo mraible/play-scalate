@@ -35,14 +35,15 @@ object ScalateTemplate {
 
   case class Template(name: String) {
     
-    def render(args: (Symbol, Any)*) = {
+    def render(args: (Symbol, Any)*):String = {
       val argsMap = populateRenderArgs(args: _*)
       
       val buffer = new StringWriter()
       var context = new DefaultRenderContext(name, scalateEngine, new PrintWriter(buffer))
       
       try {
-        val templatePath = new File(Play.applicationPath+"/app/views","/"+name).toString
+        val baseName = name.replaceAll(".html","") // for when Template() is used instead of render
+        val templatePath = new File(Play.applicationPath+"/app/views","/"+baseName).toString
           .replace(new File(Play.applicationPath+"/app/views").toString,"")
         scalateEngine.layout(templatePath + scalateType, argsMap)
       } catch {
@@ -92,17 +93,18 @@ object ScalateTemplate {
     renderArgs.data.toMap
   }
 
-  private def handleSpecialError(context:DefaultRenderContext,ex:Exception) {
+  private def handleSpecialError(context:DefaultRenderContext,ex:Exception):String = {
     context.attributes("javax.servlet.error.exception") = ex
     context.attributes("javax.servlet.error.message") = ex.getMessage
     try {
       scalateEngine.layout(scalateEngine.load(errorTemplate), context)
+      ""
     } catch {
       case ex:Exception =>
         // TODO use logging API from Play here...
         println("Caught: " + ex)
         ex.printStackTrace
-
+        ""
     }
   }
   
