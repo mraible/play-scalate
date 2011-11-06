@@ -9,11 +9,14 @@ class Plugin extends PlayPlugin {
   var templateLoader:PlayPlugin = null
   
   override def loadTemplate(file: VirtualFile): play.templates.Template = {
-      if (null == templateLoader) return new FancyTemplate(file)
+      if (templateLoader == null) {
+        //return new InternalTemplate(file)
+        return null
+      } 
       return templateLoader.loadTemplate(file);
   }
   
-  case class FancyTemplate(file: VirtualFile) extends play.templates.Template with Scalate {
+  case class InternalTemplate(file: VirtualFile) extends play.templates.Template with Scalate {
     var template:String = null
     
     def apply(file: VirtualFile) {
