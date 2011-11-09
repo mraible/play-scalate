@@ -35,7 +35,7 @@ object ScalateTemplate {
 
   case class Template(name: String) {
     
-    def render(args: (Symbol, Any)*):String = {
+    def render(args: (Symbol, Any)*) = {
       val argsMap = populateRenderArgs(args: _*)
       
       val buffer = new StringWriter()
@@ -93,18 +93,16 @@ object ScalateTemplate {
     renderArgs.data.toMap
   }
 
-  private def handleSpecialError(context:DefaultRenderContext,ex:Exception):String = {
+  private def handleSpecialError(context:DefaultRenderContext,ex:Exception) = {
     context.attributes("javax.servlet.error.exception") = ex
     context.attributes("javax.servlet.error.message") = ex.getMessage
     try {
       scalateEngine.layout(scalateEngine.load(errorTemplate), context)
-      ""
     } catch {
       case ex:Exception =>
         // TODO use logging API from Play here...
         println("Caught: " + ex)
         ex.printStackTrace
-        ""
     }
   }
   
