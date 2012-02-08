@@ -18,13 +18,13 @@ object ScalateTemplate {
 
   lazy val scalateEngine = {
     val engine = new TemplateEngine
-    engine.resourceLoader = new FileResourceLoader(Some(Play.getFile("/app/views")))
+    engine.resourceLoader = new FileResourceLoader(Some(Play.getFile("/app/pages")))
     engine.classpath = Play.getFile("/tmp/classes").getAbsolutePath
     engine.workingDirectory = Play.getFile("tmp")
     engine.combinedClassPath = true
     engine.classLoader = Play.classloader
     engine.layoutStrategy = new DefaultLayoutStrategy(engine,
-      Play.getFile("/app/views/layouts/default" + scalateType).getAbsolutePath)
+      Play.getFile("/app/pages/layouts/default" + scalateType).getAbsolutePath)
       
     engine.bindings = List(
       Binding("context", SourceCodeHelper.name(classOf[DefaultRenderContext]), true)
@@ -43,8 +43,8 @@ object ScalateTemplate {
       
       try {
         val baseName = name.replaceAll(".html","") // for when Template() is used instead of render
-        val templatePath = new File(Play.applicationPath+"/app/views","/"+baseName).toString
-          .replace(new File(Play.applicationPath+"/app/views").toString,"")
+        val templatePath = new File(Play.applicationPath+"/app/pages","/"+baseName).toString
+          .replace(new File(Play.applicationPath+"/app/pages").toString,"")
         scalateEngine.layout(templatePath + scalateType, argsMap)
       } catch {
         case ex:TemplateNotFoundException => {
@@ -107,8 +107,8 @@ object ScalateTemplate {
   }
   
   private def errorTemplate:String = {
-    val fullPath = new File(Play.applicationPath,"/app/views/errors/500.scaml").toString 
-    fullPath.replace(new File(Play.applicationPath+"/app/views").toString,"")
+    val fullPath = new File(Play.applicationPath,"/app/pages/errors/500.scaml").toString 
+    fullPath.replace(new File(Play.applicationPath+"/app/pages").toString,"")
   }
   // --- ROUTERS
   def action(action: => Any) = {
