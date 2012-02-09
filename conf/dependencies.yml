@@ -1,4 +1,4 @@
-self: play -> scalate 0.2.5
+self: play -> scalate 0.2.1
 
 require:
     - play
@@ -8,7 +8,4 @@ require:
             - javax.servlet -> *
             - com.sun.jersey -> *
             - org.osgi -> *
-            - org.scala-lang -> *
     - org.fusesource.scalate -> scalate-util 1.5.3-scala_2.8.2:
-        exclude:
-            - org.scala-lang -> *
