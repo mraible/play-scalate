@@ -8,4 +8,4 @@ require:
             - javax.servlet -> *
             - com.sun.jersey -> *
             - org.osgi -> *
-    - org.fusesource.scalate -> scalate-util 1.5.3-scala_2.8.2:
+    - org.fusesource.scalate -> scalate-util 1.5.3-scala_2.8.2
